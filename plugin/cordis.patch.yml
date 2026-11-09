@@ -15,7 +15,7 @@
       config:
         id: code-animation
         name: 创作模式
-        description: 用 193 种代码动画风格直接在对话里出片：选风格、写动画、预览、导出视频。
+        description: 用 255 种代码动画风格直接在对话里出片：选风格、写动画、预览、导出视频。
         order: 5
         plugins:
           - id: code-animation-studio
@@ -83,8 +83,6 @@
             config:
               - id: tool-subagent-control
                 name: '@deepseek-ai/dsh-tool-subagent-control'
-              - id: tool-subagent-list-agents
-                name: '@deepseek-ai/dsh-tool-subagent-control/list-agents'
               - id: tool-subagent
                 name: '@deepseek-ai/dsh-tool-subagent'
                 config:
