@@ -26,8 +26,8 @@
         "en": "Creation Mode"
       },
       "description": {
-        "zh": "193 种代码动画风格：选风格、审分镜、生成 HTML 动画并导出 MP4。",
-        "en": "193 code-animation styles: pick a style, review the storyboard, render an HTML animation and export MP4."
+        "zh": "255 种代码动画风格：选风格、审分镜、生成 HTML 动画并导出 MP4。",
+        "en": "255 code-animation styles: pick a style, review the storyboard, render an HTML animation and export MP4."
       },
       "icon": "https://raw.githubusercontent.com/wyf-yfw/dsh-creation-mode/main/plugin/icon.svg",
       "author": "wyf-yfw",

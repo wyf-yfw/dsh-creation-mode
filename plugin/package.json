@@ -2,7 +2,7 @@
   "name": "dsh-creation-mode",
   "version": "3.0.1",
   "type": "module",
-  "description": "创作模式 / Creation Mode：193 种代码动画风格，在 DeepSeek Harness 对话里直接出片。",
+  "description": "创作模式 / Creation Mode：255 种代码动画风格，在 DeepSeek Harness 对话里直接出片。",
   "license": "MIT",
   "keywords": [
     "dsh",

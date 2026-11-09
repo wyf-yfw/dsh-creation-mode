@@ -4,13 +4,13 @@
 
 # 创作模式
 
-193 种代码动画风格，接入 DeepSeek Harness 对话框：说一句话就出片。
+255 种代码动画风格，接入 DeepSeek Harness 对话框：说一句话就出片。
 
 [![stars](https://badgen.net/github/stars/wyf-yfw/dsh-creation-mode?icon=github&color=ff8a3d)](https://github.com/wyf-yfw/dsh-creation-mode/stargazers)
 [![license](https://badgen.net/badge/license/MIT/3ea675)](LICENSE)
 [![DeepSeek Harness](https://badgen.net/badge/DeepSeek%20Harness/plugin/4d6bfe)](https://github.com/deepseek-ai/dsh)
 [![npm](https://badgen.net/npm/v/dsh-creation-mode?color=cb3837)](https://www.npmjs.com/package/dsh-creation-mode)
-[![styles](https://badgen.net/badge/styles/193/e0457b)](docs/styles.md)
+[![styles](https://badgen.net/badge/styles/255/e0457b)](docs/styles.md)
 [![deps](https://badgen.net/badge/deps/0/2f9e6e)](docs/internals.md#限制)
 
 [快速开始](#快速开始) · [文档](#文档) · [风格库](docs/styles.md) · [配乐](docs/music.md) · [导出](docs/export.md)
@@ -22,7 +22,7 @@
 ## 这是什么
 
 把 [XiaoyeCodes/code-animation-prompts](https://github.com/XiaoyeCodes/code-animation-prompts)
-的 193 种风格提示词封装成 DeepSeek Harness 的一个 Agent 模式。每种风格都配了参考静帧，
+的 255 种风格提示词封装成 DeepSeek Harness 的一个 Agent 模式。每种风格都配了参考静帧，
 选之前能先看到画面。
 
 对话里的 Agent 会问你想要什么，挑几条风格给你看画面，和你确认分镜，然后**自己写 HTML + Canvas
@@ -30,7 +30,7 @@
 导出 MP4。
 
 - **零依赖**：不用 ffmpeg、playwright 或任何网络服务，导出由浏览器完成
-- **193 种风格**：10 个系列，覆盖国风水墨、像素游戏、赛博、奥斯卡电影等
+- **255 种风格**：10 个系列，覆盖国风水墨、像素游戏、赛博、奥斯卡电影等
 - **配乐也是现写的**：每个片子都由 Agent 现场写 Web Audio 合成代码，没有内置曲库、没有兜底
 - **6 个工具**：检索风格、贴参考图、读规范、提交分镜、产出动画、取工艺参考
 - **13 份工艺参考**：缓动、转场、排版、调色、特效、粒子、镜头、图表、音画、音色、文案，按需加载

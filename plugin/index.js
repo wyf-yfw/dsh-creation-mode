@@ -230,7 +230,7 @@ export function apply(ctx, config = {}) {
             }), 'application/json; charset=utf-8');
           }
 
-          // 样式库面板用的一次性目录快照：只给已上架的 193 种，含参考图地址。
+          // 样式库面板用的一次性目录快照：只给已上架的 255 种，含参考图地址。
           if (url.startsWith(`${PREFIX}/styles`) && req.method === 'GET') {
             const { series, styles } = catalog();
             const body = JSON.stringify({

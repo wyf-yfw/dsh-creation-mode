@@ -1,6 +1,6 @@
 # 创作模式 / Creation Mode
 
-193 种代码动画风格，在 [DeepSeek Harness](https://github.com/deepseek-ai/dsh) 的对话框里直接出片：
+255 种代码动画风格，在 [DeepSeek Harness](https://github.com/deepseek-ai/dsh) 的对话框里直接出片：
 选风格 → 看参考静帧 → 审分镜 → 生成 HTML 动画 → 预览并导出 MP4。
 
 一个 bundle 同时提供两件事：

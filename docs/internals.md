@@ -52,7 +52,7 @@ dsh-creation-mode/
 │   ├── client.js            # 浏览器端：回合末尾卡片（含配乐引擎）
 │   ├── src/ui.js            # client.js 的可读源码
 │   ├── src/music.js         # 程序化配乐：八个预设、卡点拟合、离线渲染
-│   ├── styles.json          # 193 条风格提示词
+│   ├── styles.json          # 255 条风格提示词
 │   ├── stills/              # 参考静帧；approved.json 是上架白名单，index.json 是上游清单
 │   └── cordis.patch.yml     # 两行：根行开启路由；预设行声明「创作模式」
 ├── market.json              # format 1 插件市场索引
@@ -120,8 +120,8 @@ curl -s http://127.0.0.1:3080/code-animation-api/health
   "ok": true,
   "rev": 24,
   "tools": ["list_styles", "show_stills", "get_style", "save_storyboard", "save_animation", "get_reference"],
-  "styles": 193,
-  "stills": 193
+  "styles": 255,
+  "stills": 255
 }
 ```
 
