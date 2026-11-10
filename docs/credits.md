@@ -10,7 +10,7 @@
 |---|---|
 | 插件代码（`index.js`、`tools.js`、`data.js`、`flow.js`、`client.js`、`src/`） | MIT |
 | 风格提示词 | 基础库来自 [XiaoyeCodes/code-animation-prompts](https://github.com/XiaoyeCodes/code-animation-prompts)，遵循其 `LICENSE.md` 与 `references/attribution.md` |
-| 参考静帧 | 上游原始静帧（255 张，即当前上架部分）遵循同一许可 |
+| 参考静帧 | 上游原始静帧（333 张，即当前上架部分）遵循同一许可 |
 | 其中 L / V / X 系列 | 分别来自 Lemo-Opuscar、mg-styles-15、code-video，第三方许可见原仓库 `assets/library/第三方许可/` |
 
 再分发时请保留上述署名与第三方许可。素材版权归原作者。

@@ -1436,7 +1436,7 @@ window.__ModuleLoader__.load({
     }
 
     /**
-     * 样式库视图：把 255 种已上架风格连同参考图一次列全。
+     * 样式库视图：把 333 种已上架风格连同参考图一次列全。
      *
      * 目录来自 Host 的 /code-animation-api/styles，参考图走 /still/<id>，两者都只
      * 认已上架的风格，所以这里看到的就是 Agent 能选到的那一批。

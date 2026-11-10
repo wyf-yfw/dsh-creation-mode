@@ -10,7 +10,7 @@
  * a temporary local HTTP server (Windows reaches WSL's localhost), and the
  * profile directory is passed as a Windows path.
  */
-const { spawn } = require('node:child_process');
+const { spawn, execFileSync } = require('node:child_process');
 const { existsSync, mkdirSync, writeFileSync, readFileSync } = require('node:fs');
 const http = require('node:http');
 const { dirname, extname, join, resolve, basename } = require('node:path');
@@ -116,6 +116,18 @@ const getJson = (port, path) => new Promise((res, rej) => {
 
   const cleanup = async () => {
     try { proc.kill(); } catch { /* already gone */ }
+    // 从 WSL 启动的 Windows Chrome，proc.kill() 只杀掉 interop 壳，chrome.exe 和它的
+    // 子进程会留在 Windows 侧继续占内存（并发跑几十次就会把机器拖死）。这里按本次
+    // 唯一的 profile 目录名精确清理，不会碰用户自己开着的 Chrome。
+    if (win) {
+      const tag = profile.split(/[\\/]/).pop();
+      const ps = `Get-CimInstance Win32_Process -Filter "Name='chrome.exe'" | Where-Object { $_.CommandLine -like '*${tag}*' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }`;
+      try {
+        execFileSync('/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe',
+          ['-NoProfile', '-NonInteractive', '-Command', ps],
+          { timeout: 15000, stdio: 'ignore' });
+      } catch { /* 清理失败不影响渲染结果 */ }
+    }
     await new Promise((r) => server.close(r));
   };
 

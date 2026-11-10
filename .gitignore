@@ -16,3 +16,8 @@ Thumbs.db
 
 # 导出清单：插件写在导出目录里的运行产物
 .creation-mode-exports.json
+
+# 封面渲染的中间产物（源 HTML/PNG 留在本地，不入库）
+plugin/stills-new/
+.covers-batches/
+stills-*.png
