@@ -591,7 +591,7 @@ export function registerCreationTools(deps) {
 
   disposers.push(tools.register({
     name: 'get_style',
-    description: '读取某一条风格的完整提示词与参考静帧信息。用户拍板风格后、出分镜之前调用它。',
+    description: '读取某一条风格的完整提示词与参考静帧信息。用户拍板风格后、进入第 4 步之前调用它。',
     parameters: {
       type: 'object',
       properties: { id: { type: 'string', description: '风格编号，如 B3、A1、O96。' } },
@@ -622,7 +622,7 @@ export function registerCreationTools(deps) {
       },
       render: (_args, value) => [{
         type: 'text',
-        text: `${value.id} ${value.name}\n\n${value.prompt || value.description || ''}\n\n下一步：按这条规范拆 3–8 个镜头，用 save_storyboard 出分镜草稿，等用户拍板。`,
+        text: `${value.id} ${value.name}\n\n${value.prompt || value.description || ''}\n\n下一步按第 0 步的判断走：做视频就用 save_storyboard 拆 3–8 个镜头出分镜草稿；做页面就用 save_outline 拆 3–8 个区块出清单。都要等用户拍板。`,
       }],
       presentationMeta: (_args, value) => value,
     },
@@ -1198,6 +1198,7 @@ export function registerCreationTools(deps) {
       '产物必须是单文件 HTML：样式和脚本全部内联，禁止外链字体/图片/CDN，禁止 fetch / XMLHttpRequest / type="module"——用户会双击在浏览器里打开，file:// 下这些都不工作。',
       '页面要真能交互：hover、滚动进场、tab、手风琴、模态、轮播都可以；表单只做前端校验不提交，列表和图表用写死的数据。',
       '必须含 <meta name="viewport">，并用 <section> 把每个区块分开，块数要与区块清单一致。',
+      '把第 4 步 save_outline 返回的 id 传进 outline_id——不传就没法比对块数，结构对不上时也不会有提醒。',
     ].join('\n'),
     parameters: {
       type: 'object',
