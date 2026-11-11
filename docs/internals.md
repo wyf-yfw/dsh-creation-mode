@@ -46,7 +46,7 @@ dsh-creation-mode/
 ├── plugin/                  # npm 包 dsh-creation-mode（bundle 根）
 │   ├── index.js             # Host：路由与挂载；按 config 决定装载哪一半
 │   ├── flow.js              # 六步流程与门禁的系统提示段落
-│   ├── tools.js             # 六个工具的 schema、校验与执行
+│   ├── tools.js             # 八个工具的 schema、校验与执行
 │   ├── references/          # 十三份工艺参考，get_reference 按需加载
 │   ├── data.js              # 风格目录的检索、投影与风格到配乐的映射
 │   ├── client.js            # 浏览器端：回合末尾卡片（含配乐引擎）
