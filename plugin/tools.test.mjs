@@ -113,3 +113,34 @@ test('save_outline 不会删掉已有页面', async () => {
   await t.get('save_outline').execute({ title: '共存2', sections: [{ name: '首屏' }] });
   assert.ok(existsSync(join(OUTPUT_DIR, `${page.id}.html`)), '清单保存后页面不应被删除');
 });
+
+const bypasses = {
+  '@import 字符串形式': '<style>@import "https://fonts.googleapis.com/css2?family=Inter";</style>',
+  'CSS url() 外链': '<style>.a{background:url(https://x.test/a.png)}</style>',
+  'img srcset 外链': '<img srcset="https://x.test/a.png 1x">',
+  '协议相对地址': '<img src="//cdn.test/a.png">',
+  '相对脚本': '<script src="app.js"></script>',
+  'iframe 外链': '<iframe src="https://x.test/embed"></iframe>',
+  'video source 外链': '<video><source src="https://x.test/a.mp4"></video>',
+  '无引号 type=module': '<script type=module>export default 1</script>',
+  '动态 import': '<script>import("https://x.test/m.js")</script>',
+};
+
+for (const [name, snippet] of Object.entries(bypasses)) {
+  test(`拦下：${name}`, () => {
+    const bad = snippet.includes('<script') || snippet.includes('<style') || snippet.includes('<img')
+      ? ok.replace('</body>', `${snippet}</body>`).replace('</head>', snippet.includes('<style') ? `${snippet}</head>` : '</head>')
+      : ok.replace('</body>', `${snippet}</body>`);
+    assert.throws(() => assertPageable(bad), /页面/);
+  });
+}
+
+test('data: 内联图片放行', () => {
+  const inline = ok.replace('<section>a</section>', '<section><img src="data:image/png;base64,iVBORw0KGgo="></section>');
+  assert.doesNotThrow(() => assertPageable(inline));
+});
+
+test('页内锚点链接放行', () => {
+  const anchor = ok.replace('<section>a</section>', '<section><a href="#top">上</a></section>');
+  assert.doesNotThrow(() => assertPageable(anchor));
+});

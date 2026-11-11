@@ -92,19 +92,27 @@ function assertRecordable(html) {
   }
 }
 
-/** 页面里出现这些就是外链，离线打开必挂。 */
-const PAGE_REMOTE = [
-  /<link[^>]+href\s*=\s*["']https?:\/\//i,
-  /<script[^>]+src\s*=\s*["']https?:\/\//i,
-  /<img[^>]+src\s*=\s*["']https?:\/\//i,
-  /@import\s+url\(\s*["']?https?:\/\//i,
-];
+/**
+ * 页面里任何会发起网络请求的写法，离线打开都会缺资源甚至白屏。
+ *
+ * 只靠几条「匹配 https://」的正则会被绕过（@import 字符串、url()、srcset、
+ * 协议相对地址、相对路径的 script），所以这里逐个标签扫属性值：除了 data: 与
+ * 页内锚点 #，其他一律拒绝。
+ */
+const PAGE_RESOURCE_TAGS = /<(link|script|img|iframe|video|audio|source|embed|object|track)\b([^>]*)>/gi;
+const PAGE_RESOURCE_ATTRS = /\b(href|src|srcset|poster|data)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/gi;
+
+function isLocalRef(value) {
+  const v = String(value || '').trim();
+  return v === '' || v.startsWith('#') || v.startsWith('data:');
+}
 
 /** 页面里出现这些在 file:// 下必然失败。 */
 const PAGE_FILE_PROTOCOL = [
   /\bfetch\s*\(/,
   /XMLHttpRequest/,
-  /<script[^>]+type\s*=\s*["']module["']/i,
+  /\bimport\s*\(/,
+  /<script[^>]+type\s*=\s*["']?module/i,
 ];
 
 /**
@@ -114,11 +122,32 @@ const PAGE_FILE_PROTOCOL = [
 function assertPageable(html) {
   const body = String(html || '');
   if (!/<html[\s>]/i.test(body)) throw new Error('页面不是完整的 HTML 文档（缺 <html>）');
-  if (PAGE_REMOTE.some((re) => re.test(body))) {
-    throw new Error('页面里有外链资源（link/script/img/@import 指向 http(s)），离线打开会垮；改成内联');
+
+  // 逐个标签看 href/src/srcset/poster/data：非 data:、非 # 的一律拒绝。
+  PAGE_RESOURCE_TAGS.lastIndex = 0;
+  let tag;
+  while ((tag = PAGE_RESOURCE_TAGS.exec(body))) {
+    const attrs = tag[2] || '';
+    PAGE_RESOURCE_ATTRS.lastIndex = 0;
+    let attr;
+    while ((attr = PAGE_RESOURCE_ATTRS.exec(attrs))) {
+      const value = attr[2] ?? attr[3] ?? attr[4] ?? '';
+      if (!isLocalRef(value)) {
+        throw new Error(`页面里有外链资源（<${tag[1]} ${attr[1]}="${value.slice(0, 60)}">），离线打开会垮；改成内联或 data: URI`);
+      }
+    }
   }
+
+  // CSS 里的 @import 与 url() 同样是请求。
+  if (/@import\b/i.test(body)) throw new Error('页面里有 @import，会去拉外部样式表；改成内联');
+  const cssUrl = /url\(\s*['"]?([^'")]*)/gi;
+  let u;
+  while ((u = cssUrl.exec(body))) {
+    if (!isLocalRef(u[1])) throw new Error(`页面 CSS 里有外部 url(${u[1].slice(0, 40)})，离线打开会缺资源；改成内联或 data: URI`);
+  }
+
   if (PAGE_FILE_PROTOCOL.some((re) => re.test(body))) {
-    throw new Error('页面用了 fetch / XMLHttpRequest / type="module"，file:// 下会失败；改成内联脚本');
+    throw new Error('页面用了 fetch / XMLHttpRequest / 动态 import / type="module"，file:// 下会失败；改成内联脚本');
   }
 }
 
