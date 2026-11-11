@@ -19,7 +19,9 @@ export const STILLS_DIR = fileURLToPath(new URL('./stills/', HERE));
 /** Stills cleared for publication, one approved style id per entry. */
 export const APPROVED_FILE = fileURLToPath(new URL('./stills/approved.json', HERE));
 /** Where generated animations are written, one HTML file per creation. */
-export const OUTPUT_DIR = fileURLToPath(new URL('./created/', HERE));
+export const OUTPUT_DIR = process.env.DSH_CA_CREATED_DIR
+  ? process.env.DSH_CA_CREATED_DIR
+  : fileURLToPath(new URL('./created/', HERE));
 /** Subdirectory an export is written into, under the session directory. */
 export const EXPORT_DIR_NAME = 'code-animation';
 /**

@@ -1,3 +1,4 @@
+import './test-env.mjs';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { assertPageable, inspectPage } from './tools.js';
@@ -40,7 +41,7 @@ test('没有 section 时给警告', () => {
 });
 
 import { registerCreationTools } from './tools.js';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { OUTPUT_DIR } from './data.js';
 
@@ -60,7 +61,7 @@ test('save_outline 落盘并返回 id', async () => {
       { name: '特性', purpose: '三条能力', content: '三列卡片', layout: '三列网格', text: '' },
     ],
   });
-  assert.match(v.id, /^pg-/);
+  assert.match(v.id, /^po-/);
   assert.equal(v.sections.length, 2);
   const saved = JSON.parse(readFileSync(join(OUTPUT_DIR, `${v.id}.json`), 'utf8'));
   assert.equal(saved.sections[0].name, '首屏');
@@ -97,4 +98,18 @@ test('save_page 在区块数与 section 数不一致时给警告', async () => {
   const page = toolsOf().get('save_page');
   const v = await page.execute({ title: '落地页', outline_id: o.id, html: PAGE });
   assert.ok(v.warnings.some((w) => w.includes('区块')));
+});
+
+test('save_page 不会删掉区块清单', async () => {
+  const t = toolsOf();
+  const o = await t.get('save_outline').execute({ title: '共存', sections: [{ name: '首屏' }] });
+  await t.get('save_page').execute({ title: '共存', outline_id: o.id, html: PAGE });
+  assert.ok(existsSync(join(OUTPUT_DIR, `${o.id}.json`)), '页面保存后区块清单不应被删除');
+});
+
+test('save_outline 不会删掉已有页面', async () => {
+  const t = toolsOf();
+  const page = await t.get('save_page').execute({ title: '共存2', html: PAGE });
+  await t.get('save_outline').execute({ title: '共存2', sections: [{ name: '首屏' }] });
+  assert.ok(existsSync(join(OUTPUT_DIR, `${page.id}.html`)), '清单保存后页面不应被删除');
 });

@@ -828,7 +828,8 @@ export function registerCreationTools(deps) {
       if (!style) warnings.push('没有关联风格：这版页面未经风格拍板');
       if (sections.length < 3) warnings.push('区块少于 3 块，页面可能显得单薄');
 
-      const stem = `pg-${slug(args?.title)}-${Date.now().toString(36)}`;
+      // 区块清单用 po- 前缀：页面是 pg-，两者不能共用前缀，否则 pruneSaves 会互相删。
+      const stem = `po-${slug(args?.title)}-${Date.now().toString(36)}`;
       let id = stem;
       for (let n = 2; existsSync(join(OUTPUT_DIR, `${id}.json`)); n++) id = `${stem}-${n}`;
 
@@ -850,7 +851,7 @@ export function registerCreationTools(deps) {
       };
 
       mkdirSync(OUTPUT_DIR, { recursive: true });
-      const removed = pruneSaves('pg-', id);
+      const removed = pruneSaves('po-', id);
       if (removed.length) outline.warnings = [...warnings, `已清理 ${removed.length} 个旧区块清单，只保留这一份`];
       writeFileSync(join(OUTPUT_DIR, `${id}.json`), JSON.stringify(outline, null, 2), 'utf8');
       return outline;
