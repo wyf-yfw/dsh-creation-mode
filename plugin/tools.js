@@ -92,6 +92,49 @@ function assertRecordable(html) {
   }
 }
 
+/** 页面里出现这些就是外链，离线打开必挂。 */
+const PAGE_REMOTE = [
+  /<link[^>]+href\s*=\s*["']https?:\/\//i,
+  /<script[^>]+src\s*=\s*["']https?:\/\//i,
+  /<img[^>]+src\s*=\s*["']https?:\/\//i,
+  /@import\s+url\(\s*["']?https?:\/\//i,
+];
+
+/** 页面里出现这些在 file:// 下必然失败。 */
+const PAGE_FILE_PROTOCOL = [
+  /\bfetch\s*\(/,
+  /XMLHttpRequest/,
+  /<script[^>]+type\s*=\s*["']module["']/i,
+];
+
+/**
+ * 页面 HTML 的硬校验：用户会双击在浏览器里打开，file:// 下外链资源和
+ * fetch / module 脚本都不工作，所以这里直接拦下，不靠提示词自觉。
+ */
+function assertPageable(html) {
+  const body = String(html || '');
+  if (!/<html[\s>]/i.test(body)) throw new Error('页面不是完整的 HTML 文档（缺 <html>）');
+  if (PAGE_REMOTE.some((re) => re.test(body))) {
+    throw new Error('页面里有外链资源（link/script/img/@import 指向 http(s)），离线打开会垮；改成内联');
+  }
+  if (PAGE_FILE_PROTOCOL.some((re) => re.test(body))) {
+    throw new Error('页面用了 fetch / XMLHttpRequest / type="module"，file:// 下会失败；改成内联脚本');
+  }
+}
+
+/** 页面里不致命、但值得提醒的问题。 */
+function inspectPage(html) {
+  const body = String(html || '');
+  const warnings = [];
+  if (!/<meta[^>]+name\s*=\s*["']viewport["']/i.test(body)) {
+    warnings.push('缺少 viewport meta，手机上会按桌面宽度渲染');
+  }
+  if (!/<section[\s>]/i.test(body)) {
+    warnings.push('没有 <section>，区块结构与清单对不上');
+  }
+  return warnings;
+}
+
 function slug(input) {
   const base = String(input || 'animation')
     .toLowerCase()
@@ -1012,4 +1055,4 @@ export function registerCreationTools(deps) {
   };
 }
 
-export { inspectHtml, inspectShots, assertRecordable };
+export { inspectHtml, inspectShots, assertRecordable, assertPageable, inspectPage };
