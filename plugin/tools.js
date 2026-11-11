@@ -1161,6 +1161,109 @@ export function registerCreationTools(deps) {
     },
   }));
 
+  disposers.push(tools.register({
+    name: 'save_page',
+    description: [
+      '提交页面本体，在对话里渲染成可预览、可下载的页面卡片。',
+      '产物必须是单文件 HTML：样式和脚本全部内联，禁止外链字体/图片/CDN，禁止 fetch / XMLHttpRequest / type="module"——用户会双击在浏览器里打开，file:// 下这些都不工作。',
+      '页面要真能交互：hover、滚动进场、tab、手风琴、模态、轮播都可以；表单只做前端校验不提交，列表和图表用写死的数据。',
+      '必须含 <meta name="viewport">，并用 <section> 把每个区块分开，块数要与区块清单一致。',
+    ].join('\n'),
+    parameters: {
+      type: 'object',
+      properties: {
+        title: { type: 'string', description: '这个页面叫什么。' },
+        style_id: { type: 'string', description: '已拍板的风格编号。' },
+        outline_id: { type: 'string', description: '已拍板的区块清单 id（save_outline 的返回值）。' },
+        html: { type: 'string', description: '完整的页面 HTML 正文，单文件自包含。' },
+      },
+      required: ['title', 'html'],
+      additionalProperties: false,
+    },
+    output: {
+      schema: {
+        type: 'object',
+        properties: {
+          id: { type: 'string' },
+          title: { type: 'string' },
+          styleId: { type: 'string' },
+          styleName: { type: 'string' },
+          outlineId: { type: 'string' },
+          url: { type: 'string' },
+          bytes: { type: 'integer' },
+          sections: { type: 'integer', description: '页面里 <section> 的个数' },
+          warnings: { type: 'array', items: { type: 'string' } },
+        },
+        required: ['id', 'title', 'url', 'bytes', 'sections'],
+        additionalProperties: false,
+      },
+      render: (_args, value) => [{
+        type: 'text',
+        text: [
+          `已生成页面「${value.title}」${value.styleId ? `（${value.styleId} ${value.styleName || ''}）` : ''}`,
+          `${value.sections} 个区块 · ${(value.bytes / 1024).toFixed(0)} KB`,
+          value.warnings.length ? `注意：${value.warnings.join('；')}` : '',
+          `地址：${value.url}`,
+          '对话末尾已显示页面卡片：可切桌面/平板/手机宽度预览，点「下载 HTML」拿到双击就能打开的文件。',
+        ].filter(Boolean).join('\n'),
+      }],
+      presentationMeta: (_args, value) => value,
+    },
+    async execute(args) {
+      const html = stripWrappers(args?.html);
+      if (!html) throw new Error('html 为空');
+      const bytes = Buffer.byteLength(html, 'utf8');
+      if (bytes > MAX_HTML_BYTES) throw new Error(`页面过大（${(bytes / 1048576).toFixed(1)} MB），上限 2 MB`);
+
+      // 先校验再落盘：被拒的那次不留孤儿文件。
+      assertPageable(html);
+
+      const style = args?.style_id ? styleById(args.style_id) : undefined;
+      const outlineId = String(args?.outline_id || '');
+      const warnings = [...inspectPage(html)];
+
+      // 区块数与 <section> 数对不上时如实指出，不静默接受。
+      let outline;
+      if (outlineId) {
+        try {
+          outline = JSON.parse(readFileSync(join(OUTPUT_DIR, `${outlineId}.json`), 'utf8'));
+        } catch {
+          warnings.push(`找不到区块清单 ${outlineId}`);
+        }
+      }
+      const sectionCount = (html.match(/<section[\s>]/gi) || []).length;
+      if (outline && Array.isArray(outline.sections) && outline.sections.length !== sectionCount) {
+        warnings.push(`区块清单有 ${outline.sections.length} 块，页面里有 ${sectionCount} 个 <section>`);
+      }
+      if (!outlineId) warnings.push('没有关联区块清单：这版页面未经用户拍板');
+
+      const stem = `pg-${slug(args?.title)}-${Date.now().toString(36)}`;
+      let id = stem;
+      for (let n = 2; existsSync(join(OUTPUT_DIR, `${id}.html`)); n++) id = `${stem}-${n}`;
+
+      mkdirSync(OUTPUT_DIR, { recursive: true });
+      writeFileSync(join(OUTPUT_DIR, `${id}.html`), html, 'utf8');
+
+      const value = {
+        id,
+        title: String(args?.title || '页面'),
+        styleId: style ? style.id : '',
+        styleName: style ? style.name : '',
+        url: `/code-animation-api/page/${id}`,
+        bytes,
+        sections: sectionCount,
+        warnings,
+      };
+      if (outlineId) value.outlineId = outlineId;
+
+      const removed = pruneSaves('pg-', id);
+      if (removed.length) value.warnings = [...value.warnings, `已清理 ${removed.length} 个旧页面文件，只保留这一版`];
+
+      writeFileSync(join(OUTPUT_DIR, `${id}.json`), JSON.stringify({ ...value, outlineId: outlineId || undefined }, null, 2), 'utf8');
+      return value;
+    },
+  }));
+
   return () => {
     for (const dispose of disposers.reverse()) {
       try { dispose(); } catch { /* one bad disposer must not block the rest */ }

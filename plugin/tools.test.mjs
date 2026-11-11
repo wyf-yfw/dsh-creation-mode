@@ -70,3 +70,31 @@ test('save_outline 拒绝空 sections', async () => {
   const outline = toolsOf().get('save_outline');
   await assert.rejects(() => outline.execute({ title: 'x', sections: [] }), /区块/);
 });
+
+const PAGE = '<!doctype html><html><head><meta name="viewport" content="width=device-width">'
+  + '<style>body{margin:0}</style></head><body><section>首屏</section><section>特性</section></body></html>';
+
+test('save_page 落盘并返回 /page/ 地址', async () => {
+  const page = toolsOf().get('save_page');
+  const v = await page.execute({ title: '落地页', style_id: 'K1', html: PAGE });
+  assert.match(v.url, /^\/code-animation-api\/page\//);
+  assert.equal(v.bytes, Buffer.byteLength(PAGE));
+  assert.equal(readFileSync(join(OUTPUT_DIR, `${v.id}.html`), 'utf8'), PAGE);
+});
+
+test('save_page 拒绝外链页面', async () => {
+  const page = toolsOf().get('save_page');
+  const bad = PAGE.replace('</head>', '<link rel="stylesheet" href="https://x.test/a.css"></head>');
+  await assert.rejects(() => page.execute({ title: 'x', html: bad }), /外链/);
+});
+
+test('save_page 在区块数与 section 数不一致时给警告', async () => {
+  const outline = toolsOf().get('save_outline');
+  const o = await outline.execute({
+    title: '落地页',
+    sections: [{ name: '首屏' }, { name: '特性' }, { name: '价格' }],
+  });
+  const page = toolsOf().get('save_page');
+  const v = await page.execute({ title: '落地页', outline_id: o.id, html: PAGE });
+  assert.ok(v.warnings.some((w) => w.includes('区块')));
+});
