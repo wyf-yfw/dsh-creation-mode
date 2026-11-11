@@ -65,7 +65,7 @@ export const REFERENCES = {
  * module once at process start, so a running host can still serve an older revision
  * than the one on disk, and this is how that shows up.
  */
-export const BUILD_REV = 25;
+export const BUILD_REV = 26;
 
 /** Tool names this revision registers, in the order they are declared. */
 export const TOOL_NAMES = ['list_styles', 'show_stills', 'get_style', 'save_storyboard', 'save_animation', 'save_outline', 'save_page', 'get_reference'];
