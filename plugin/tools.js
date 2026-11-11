@@ -745,6 +745,119 @@ export function registerCreationTools(deps) {
   }));
 
   disposers.push(tools.register({
+    name: 'save_outline',
+    description: [
+      '提交页面区块清单草稿，在对话里渲染成可逐块审阅的结构表。',
+      '页面没有时间轴，所以不写秒数：写清每一块说什么、放什么、什么版式、文案原文。',
+      '区块要覆盖首屏到页脚，从用户第一眼看到的内容开始。',
+      '这一步不写页面代码。提交后停下来等用户拍板：加块、删块、改文案、调顺序，改完重新提交。',
+    ].join('\n'),
+    parameters: {
+      type: 'object',
+      properties: {
+        title: { type: 'string', description: '这个页面叫什么。' },
+        style_id: { type: 'string', description: '已拍板的风格编号。' },
+        aspect: { type: 'string', description: '画幅。页面一般用 16:9（桌面），移动端优先用 9:16。', enum: ['16:9', '9:16', '1:1'] },
+        sections: {
+          type: 'array',
+          description: '区块列表，按页面从上到下的顺序。',
+          items: {
+            type: 'object',
+            properties: {
+              name: { type: 'string', description: '区块名，如「首屏」「特性」「价格」「页脚」。' },
+              purpose: { type: 'string', description: '这一块要达成什么，一句话。' },
+              content: { type: 'string', description: '放什么内容：标题、图片、卡片、表格、按钮。' },
+              layout: { type: 'string', description: '版式：居中、左右分栏、三列网格、全宽等。' },
+              text: { type: 'string', description: '这一块出现的文字原文，没有就留空。' },
+            },
+            required: ['name'],
+            additionalProperties: false,
+          },
+        },
+      },
+      required: ['title', 'sections'],
+      additionalProperties: false,
+    },
+    output: {
+      schema: {
+        type: 'object',
+        properties: {
+          id: { type: 'string' },
+          title: { type: 'string' },
+          styleId: { type: 'string' },
+          styleName: { type: 'string' },
+          aspect: { type: 'string' },
+          sections: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                index: { type: 'integer' },
+                name: { type: 'string' },
+                purpose: { type: 'string' },
+                content: { type: 'string' },
+                layout: { type: 'string' },
+                text: { type: 'string' },
+              },
+              required: ['index', 'name'],
+              additionalProperties: false,
+            },
+          },
+          warnings: { type: 'array', items: { type: 'string' } },
+        },
+        required: ['id', 'title', 'sections'],
+        additionalProperties: false,
+      },
+      render: (_args, value) => [{
+        type: 'text',
+        text: [
+          `已生成页面区块清单「${value.title}」${value.styleId ? `（${value.styleId} ${value.styleName || ''}）` : ''}`,
+          `共 ${value.sections.length} 块：${value.sections.map((s) => s.name).join(' / ')}`,
+          value.warnings.length ? `注意：${value.warnings.join('；')}` : '',
+          '请用户审这份区块清单：加块、删块、改文案、调顺序。拍板之前不要写页面。',
+        ].filter(Boolean).join('\n'),
+      }],
+      presentationMeta: (_args, value) => value,
+    },
+    async execute(args) {
+      const sections = Array.isArray(args?.sections) ? args.sections : [];
+      if (!sections.length) throw new Error('区块清单不能为空：至少要有一块');
+      const aspect = ['16:9', '9:16', '1:1'].includes(args?.aspect) ? args.aspect : '16:9';
+      const style = args?.style_id ? styleById(args.style_id) : undefined;
+      const warnings = [];
+      if (!style) warnings.push('没有关联风格：这版页面未经风格拍板');
+      if (sections.length < 3) warnings.push('区块少于 3 块，页面可能显得单薄');
+
+      const stem = `pg-${slug(args?.title)}-${Date.now().toString(36)}`;
+      let id = stem;
+      for (let n = 2; existsSync(join(OUTPUT_DIR, `${id}.json`)); n++) id = `${stem}-${n}`;
+
+      const outline = {
+        id,
+        title: String(args?.title || '页面'),
+        styleId: style ? style.id : '',
+        styleName: style ? style.name : '',
+        aspect,
+        sections: sections.map((sec, i) => ({
+          index: i + 1,
+          name: String(sec.name || ''),
+          purpose: String(sec.purpose || ''),
+          content: String(sec.content || ''),
+          layout: String(sec.layout || ''),
+          text: String(sec.text || ''),
+        })),
+        warnings,
+      };
+
+      mkdirSync(OUTPUT_DIR, { recursive: true });
+      const removed = pruneSaves('pg-', id);
+      if (removed.length) outline.warnings = [...warnings, `已清理 ${removed.length} 个旧区块清单，只保留这一份`];
+      writeFileSync(join(OUTPUT_DIR, `${id}.json`), JSON.stringify(outline, null, 2), 'utf8');
+      return outline;
+    },
+  }));
+
+  disposers.push(tools.register({
     name: 'save_animation',
     description: [
       '把一段动画 HTML 存到工作区，并在对话里渲染成可播放、可导出视频的动画卡片。',
