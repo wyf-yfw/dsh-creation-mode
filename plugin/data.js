@@ -56,6 +56,7 @@ export const REFERENCES = {
   timbre: '音色配方',
   copy: '文案标准',
   moves: '动效与界面词表',
+  page: '版式与页面结构',
 };
 
 /**
