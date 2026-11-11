@@ -329,6 +329,20 @@ export function apply(ctx, config = {}) {
             return res.end(fitted);
           }
 
+          // 页面产物：单文件 HTML，原样返回，不注入任何样式（响应式由页面自己负责）。
+          if (url.startsWith(`${PREFIX}/page/`)) {
+            const id = safeId(url.slice(`${PREFIX}/page/`.length));
+            const file = id ? join(OUTPUT_DIR, `${id}.html`) : '';
+            if (!file || !existsSync(file)) return send(res, 404, 'not found');
+            const html = readFileSync(file, 'utf8');
+            res.writeHead(200, {
+              'content-type': 'text/html; charset=utf-8',
+              'content-length': Buffer.byteLength(html),
+              'cache-control': 'no-store',
+            });
+            return res.end(html);
+          }
+
           return send(res, 404, 'not found');
         } catch (error) {
           trace(`error ${req.method} ${url} :: ${error?.message || error}`);
