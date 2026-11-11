@@ -15,7 +15,7 @@
       config:
         id: code-animation
         name: 创作模式
-        description: 用 333 种代码动画风格直接在对话里出片：选风格、写动画、预览、导出视频。
+        description: 用 333 种风格在对话里直接出片：做视频走分镜与动画、导出 MP4；做页面走区块与版式、下载 HTML。
         order: 5
         plugins:
           - id: code-animation-studio
