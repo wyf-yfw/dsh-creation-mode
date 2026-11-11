@@ -97,6 +97,9 @@
 | `audio` | 卡点用 beats、bed/dest 分线、落点、留白、电平 |
 | `timbre` | 28 条音色配方、三个完整示例、编曲层次 |
 | `copy` | 字幕硬规则、禁用词、改写流程、标题 |
+| `moves` | 120 条动效与界面词表（motion / motion2 / ui / lp / lp2），含编号、名称、含义、何时用 |
+| `moves/<pack>` | 该包的完整 `meta.json`：五语名称、含义、提问例句、时序规格 |
+| `moves/<pack>/code` | 该包的 `pack.js`：可直接运行的 Canvas 2D 实现 |
 
 ## 分镜校验
 

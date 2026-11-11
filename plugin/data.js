@@ -38,6 +38,8 @@ export const KEEP_SAVES = 1;
  * 按需取。13 份参考对应 13 个工艺方向，和 Remotion 的 skill 组织方式一致。
  */
 export const REFERENCES_DIR = fileURLToPath(new URL('./references/', HERE));
+/** 原样收录的上游词表（motion-prompt，MIT），按包分目录保存，不做改写。 */
+export const VENDOR_DIR = fileURLToPath(new URL('./vendor/', HERE));
 
 export const REFERENCES = {
   motion: '运动与缓动',
@@ -53,6 +55,7 @@ export const REFERENCES = {
   audio: '音画同步',
   timbre: '音色配方',
   copy: '文案标准',
+  moves: '动效与界面词表',
 };
 
 /**
@@ -62,7 +65,7 @@ export const REFERENCES = {
  * module once at process start, so a running host can still serve an older revision
  * than the one on disk, and this is how that shows up.
  */
-export const BUILD_REV = 24;
+export const BUILD_REV = 25;
 
 /** Tool names this revision registers, in the order they are declared. */
 export const TOOL_NAMES = ['list_styles', 'show_stills', 'get_style', 'save_storyboard', 'save_animation', 'get_reference'];

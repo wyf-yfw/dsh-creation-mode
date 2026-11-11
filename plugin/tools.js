@@ -11,9 +11,11 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, unlinkSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { KEEP_SAVES, OUTPUT_DIR, REFERENCES, REFERENCES_DIR, STILLS_DIR, catalog, defaultMusicFor, describe, searchStyles, styleById } from './data.js';
+import { KEEP_SAVES, OUTPUT_DIR, REFERENCES, REFERENCES_DIR, STILLS_DIR, VENDOR_DIR, catalog, defaultMusicFor, describe, searchStyles, styleById } from './data.js';
 
 const MAX_HTML_BYTES = 2 * 1024 * 1024;
+/** 原样收录的 motion-prompt 包（页面与界面用得上的五个）。 */
+const MOVES_PACKS = ['motion', 'motion2', 'ui', 'lp', 'lp2'];
 const MAX_STILLS_PER_CALL = 4;
 
 /** Strip the wrappers a model habitually adds around a file body. */
@@ -309,18 +311,49 @@ export function registerCreationTools(deps) {
       presentationMeta: (_args, value) => value,
     },
     async execute(args) {
-      const name = String(args?.name || '').trim().toLowerCase();
-      const hit = REFERENCES[name];
+      const raw = String(args?.name || '').trim().toLowerCase();
+      if (!raw) {
+        throw new Error(`没有这份参考。可用：${Object.keys(REFERENCES).join(' / ')}，`
+          + '或 moves/<pack>、moves/<pack>/code 取上游词表的完整数据与代码。');
+      }
+
+      // moves/<pack> 与 moves/<pack>/code：直接返回上游原文件，不做任何改写。
+      const parts = raw.split('/');
+      if (parts[0] === 'moves' && parts.length >= 2) {
+        const pack = parts[1];
+        if (!MOVES_PACKS.includes(pack)) {
+          throw new Error(`没有这个包：${pack}。可用：${MOVES_PACKS.join(' / ')}`);
+        }
+        if (parts.length > 3 || (parts[2] !== undefined && parts[2] !== 'code')) {
+          throw new Error(`子路径只能是 code：moves/${pack} 或 moves/${pack}/code`);
+        }
+        const wantCode = parts[2] === 'code';
+        const file = join(VENDOR_DIR, 'motion-prompt', pack, wantCode ? 'pack.js' : 'meta.json');
+        let body;
+        try {
+          body = readFileSync(file, 'utf8');
+        } catch {
+          throw new Error(`上游文件缺失：vendor/motion-prompt/${pack}/${wantCode ? 'pack.js' : 'meta.json'}`);
+        }
+        return {
+          name: raw,
+          title: wantCode ? `motion-prompt/${pack} 实现代码` : `motion-prompt/${pack} 完整数据`,
+          body,
+        };
+      }
+
+      const hit = REFERENCES[raw];
       if (!hit) {
-        throw new Error(`没有这份参考：${name || '(空)'}。可用：${Object.keys(REFERENCES).join(' / ')}`);
+        throw new Error(`没有这份参考：${raw}。可用：${Object.keys(REFERENCES).join(' / ')}，`
+          + `或 moves/<pack>（${MOVES_PACKS.join(' / ')}）。`);
       }
       let body;
       try {
-        body = readFileSync(join(REFERENCES_DIR, `${name}.md`), 'utf8');
+        body = readFileSync(join(REFERENCES_DIR, `${raw}.md`), 'utf8');
       } catch {
-        throw new Error(`参考文件缺失：references/${name}.md`);
+        throw new Error(`参考文件缺失：references/${raw}.md`);
       }
-      return { name, title: hit, body };
+      return { name: raw, title: hit, body };
     },
   }));
 

@@ -135,6 +135,8 @@ export const FLOW_PROMPT = `## 创作流程
 | get_reference("camera") | 推拉摇移、视差、伪 3D 时 |
 | get_reference("data-viz") | 画面里有图表、数字对比时 |
 | get_reference("timbre") | 写 score_js 之前。28 条音色配方 + 编曲层次 |
+| get_reference("moves") | 要用具体动效或界面组件时。120 条词表：编号、名称、含义 |
+| get_reference("moves/ui") | 需要某条的时序规格或实现时。换成 motion / motion2 / lp / lp2，加 /code 取代码 |
 
 一条 30 秒的片子，通常取 3–5 份就够。取太多反而抓不住重点。
 

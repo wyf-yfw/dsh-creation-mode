@@ -34,3 +34,12 @@ Issue 与 PR 均可。以下方向尚未实现：
 风格库来自 <a href="https://github.com/XiaoyeCodes/code-animation-prompts">code-animation-prompts</a></sub>
 
 </div>
+
+## Motion Prompt
+
+`plugin/vendor/motion-prompt/` 原样收录了 [showheyohtaki/motion-prompt](https://github.com/showheyohtaki/motion-prompt)
+的 5 个包（motion / motion2 / ui / lp / lp2，共 120 条），未做任何改写。
+
+- 作者：Shohei Ohtaki
+- 授权：MIT，全文见 `plugin/vendor/motion-prompt/LICENSE`
+- 抓取提交与日期见 `plugin/vendor/motion-prompt/SOURCE.md`
