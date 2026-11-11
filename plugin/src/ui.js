@@ -138,6 +138,20 @@ window.__ModuleLoader__.load({
 .cas-lib-desc{display:block;margin-top:3px;font-size:11px;color:var(--dsw-alias-label-secondary);
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cas-lib-empty{padding:48px 0;text-align:center;font-size:13px;color:var(--dsw-alias-label-secondary)}
+
+/* 页面卡片：iframe 按目标宽度渲染，再整体缩到容器里，窄屏不出现横向滚动 */
+.cas-page-wrap{position:relative;overflow:hidden;background:#fff;border-bottom:1px solid var(--dsw-alias-border-l1)}
+.cas-page-frame{display:block;border:0;background:#fff;transform-origin:top left}
+.cas-page-bar{display:flex;align-items:center;gap:8px;padding:8px 11px;border-top:1px solid var(--dsw-alias-border-l1)}
+.cas-page-meta{font-size:11px;color:var(--dsw-alias-label-secondary);white-space:nowrap}
+.cas-wbtn{height:24px;padding:0 9px;border-radius:6px;cursor:pointer;font:600 11px/1 inherit;
+  border:1px solid var(--dsw-alias-border-l1);background:transparent;color:var(--dsw-alias-label-secondary)}
+.cas-wbtn[data-on="1"]{background:var(--dsw-alias-label-primary);border-color:transparent;color:var(--dsw-alias-bg-base)}
+.cas-outline{display:flex;flex-direction:column}
+.cas-outline-row{display:flex;gap:10px;padding:8px 11px;border-top:1px solid var(--dsw-alias-border-l1);font-size:12px}
+.cas-outline-idx{width:20px;color:var(--dsw-alias-label-secondary);flex:none}
+.cas-outline-name{width:76px;font-weight:600;flex:none}
+.cas-outline-rest{color:var(--dsw-alias-label-secondary);min-width:0}
 `;
 
     const PALETTE = ['#ff8a3d', '#e0457b', '#7b5bff', '#3fd7c0', '#4d6bfe', '#ffc04d'];
@@ -1425,6 +1439,125 @@ window.__ModuleLoader__.load({
       );
     }
 
+    /** 区块清单的元数据 → 渲染用结构。 */
+    function outlineFromMeta(meta) {
+      if (!meta || !Array.isArray(meta.sections)) return null;
+      return {
+        id: String(meta.id || ''),
+        title: String(meta.title || ''),
+        styleId: String(meta.styleId || ''),
+        styleName: String(meta.styleName || ''),
+        sections: meta.sections,
+      };
+    }
+
+    /** 区块清单卡片：逐块列出名称、版式、文案，供用户拍板。 */
+    function OutlineRow(props) {
+      const outline = outlineFromMeta(props && props.block && props.block.meta);
+      if (!outline) return null;
+      return h('div', { className: 'cas-tail cas-inline' },
+        h('style', null, CSS),
+        h('div', { className: 'cas-card' },
+          h('div', { className: 'cas-card-head' },
+            h('span', { className: 'cas-dot' }),
+            h('span', { className: 'cas-card-title' }, outline.title || '页面区块'),
+            h('span', { className: 'cas-card-meta' },
+              `${outline.sections.length} 块${outline.styleId ? ` · ${outline.styleId}` : ''}`),
+          ),
+          h('div', { className: 'cas-outline' },
+            outline.sections.map((sec) => h('div', { className: 'cas-outline-row', key: `s${sec.index}` },
+              h('span', { className: 'cas-outline-idx' }, String(sec.index)),
+              h('span', { className: 'cas-outline-name' }, sec.name || ''),
+              h('span', { className: 'cas-outline-rest' },
+                [sec.layout, sec.text || sec.content].filter(Boolean).join(' · ')),
+            )),
+          ),
+        ),
+      );
+    }
+
+    /** 三种预览宽度的定义。 */
+    const PAGE_WIDTHS = [
+      { id: 'desktop', w: 1440, label: '桌面' },
+      { id: 'tablet', w: 834, label: '平板' },
+      { id: 'phone', w: 390, label: '手机' },
+    ];
+
+    /**
+     * 页面卡片：iframe 按目标宽度渲染，再用 transform 等比缩到容器里。
+     *
+     * 直接给 iframe 设 1440px 宽会把卡片撑破，所以量出容器宽度后算一个 scale，
+     * 既保住页面真实的桌面布局，又不会出现横向滚动条。
+     */
+    function PageCard(props) {
+      const meta = (props && props.block && props.block.meta) || {};
+      const id = String(meta.id || '');
+      const [width, setWidth] = useState('desktop');
+      const [scale, setScale] = useState(1);
+      const wrapRef = useRef(null);
+      const target = PAGE_WIDTHS.find((w) => w.id === width) || PAGE_WIDTHS[0];
+
+      useEffect(() => {
+        const el = wrapRef.current;
+        if (!el || typeof ResizeObserver === 'undefined') return undefined;
+        const fit = () => setScale(Math.min(1, el.clientWidth / target.w));
+        fit();
+        const ro = new ResizeObserver(fit);
+        ro.observe(el);
+        return () => ro.disconnect();
+      }, [target.w]);
+
+      if (!id) return null;
+      const height = Math.round(900 * scale);
+
+      const onDownload = () => {
+        fetch(`${API}/page/${id}`)
+          .then((r) => (r.ok ? r.text() : Promise.reject(new Error(`HTTP ${r.status}`))))
+          .then((text) => {
+            const url = URL.createObjectURL(new Blob([text], { type: 'text/html;charset=utf-8' }));
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${String(meta.title || 'page').replace(/[\\/:*?"<>|]+/g, '_')}.html`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 4000);
+          })
+          .catch(() => {});
+      };
+
+      return h('div', { className: 'cas-tail cas-inline' },
+        h('style', null, CSS),
+        h('div', { className: 'cas-card' },
+          h('div', { className: 'cas-card-head' },
+            h('span', { className: 'cas-dot' }),
+            h('span', { className: 'cas-card-title' }, meta.title || '页面'),
+            h('span', { className: 'cas-card-meta' }, meta.styleName || ''),
+          ),
+          h('div', { className: 'cas-page-wrap', ref: wrapRef, style: { height: `${height}px` } },
+            h('iframe', {
+              className: 'cas-page-frame',
+              src: `${API}/page/${id}`,
+              title: meta.title || '页面预览',
+              style: { width: `${target.w}px`, height: '900px', transform: `scale(${scale})` },
+            }),
+          ),
+          h('div', { className: 'cas-page-bar' },
+            h('span', { className: 'cas-page-meta' }, `${meta.sections || 0} 个区块`),
+            h('span', { className: 'cas-grow' }),
+            PAGE_WIDTHS.map((w) => h('button', {
+              key: w.id,
+              type: 'button',
+              className: 'cas-wbtn',
+              'data-on': width === w.id ? '1' : '0',
+              onClick: () => setWidth(w.id),
+            }, w.label)),
+            h('button', { type: 'button', className: 'cas-btn cas-btn-primary', onClick: onDownload }, '下载 HTML'),
+          ),
+        ),
+      );
+    }
+
     function StoryboardRow(props) {
       const { block } = props || {};
       const board = boardFromMeta(block && block.meta);
@@ -1564,6 +1697,14 @@ window.__ModuleLoader__.load({
             name: 'tool.call.toolview',
             key: 'save_storyboard',
           }, StoryboardRow);
+          yield ctx.slots.register({
+            name: 'tool.call.toolview',
+            key: 'save_outline',
+          }, OutlineRow);
+          yield ctx.slots.register({
+            name: 'tool.call.toolview',
+            key: 'save_page',
+          }, PageCard);
         });
 
         // 样式库做成「对话 / 轨迹」旁边的第三个页签：view 槽的每个注册就是页签行
